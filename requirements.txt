@@ -1,0 +1,16 @@
+# Phase 2: Vehicle Detection
+ultralytics>=8.0.0
+opencv-python>=4.8.0
+numpy>=1.24.0
+pillow>=10.0.0
+
+# Phase 3: OCR (we'll use later)
+# easyocr>=1.7.0
+
+# Phase 6: Backend (we'll use later)
+# fastapi>=0.104.0
+# uvicorn>=0.24.0
+
+# Phase 7: Database (we'll use later)
+# psycopg2-binary>=2.9.0
+# sqlalchemy>=2.0.0

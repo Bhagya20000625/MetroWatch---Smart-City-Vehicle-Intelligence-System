@@ -1,0 +1,31 @@
+# Virtual Environment
+venv/
+env/
+
+# Python Cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Models (too large for git)
+models/*.pt
+*.pt
+
+# IDE
+.vscode/
+.idea/
+
+# Data files (images/videos can be large)
+data/images/*
+data/videos/*
+!data/images/.gitkeep
+!data/videos/.gitkeep
+
+# Results
+results/
+outputs/
+
+# OS
+.DS_Store
+Thumbs.db
