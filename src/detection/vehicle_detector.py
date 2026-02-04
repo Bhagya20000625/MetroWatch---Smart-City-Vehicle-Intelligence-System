@@ -129,16 +129,16 @@ class VehicleDetector:
         print(f"Result saved to: {output_path}")
 
 
-# Example usage
+# usage
 if __name__ == "__main__":
     # Initialize detector
-    detector = VehicleDetector(model_name='yolov8n.pt')
+    detector = VehicleDetector(model_name='yolov8x.pt') 
     
-    # Example: Detect vehicles in an image
-    image_path = "data/images/test_image.jpg"
+    #  Detect vehicles in an image
+    image_path = "data/images/test_image2.jpg" 
     
     # Detect vehicles
-    vehicles, original_img = detector.detect_vehicles(image_path, confidence_threshold=0.5)
+    vehicles, original_img = detector.detect_vehicles(image_path, confidence_threshold=0.3)
     
     if vehicles is not None:
         # Print detection results
