@@ -1,4 +1,4 @@
-import easyocr
+from paddleocr import PaddleOCR
 import cv2
 import numpy as np
 import os
@@ -11,11 +11,12 @@ class LicensePlateRecognizer:
         
         print("Initializing License Plate Recognizer...")
         
-        # Initialize EasyOCR reader (English language)
-        # Set gpu=True if you have CUDA-enabled GPU
-        print("Loading EasyOCR (this takes a moment on first run)...")
-        self.reader = easyocr.Reader(['en'], gpu=False)
-        print("EasyOCR loaded!")
+        # Initialize PaddleOCR
+        # use_angle_cls=True helps with rotated plates
+        # lang='en' for English characters
+        print("Loading PaddleOCR (this takes a moment on first run)...")
+        self.reader = PaddleOCR(use_angle_cls=True, lang='en', show_log=False)
+        print("PaddleOCR loaded!")
         self.use_custom_detector = os.path.exists(plate_model_path)
         
         if self.use_custom_detector:
@@ -103,20 +104,20 @@ class LicensePlateRecognizer:
             # Step 2: Preprocess plate image
             processed = self.preprocess_plate(plate_img)
             
-            # Step 3: Run OCR
-            # EasyOCR returns: [bbox, text, confidence]
-            ocr_results = self.reader.readtext(plate_img)
+            # Step 3: Run OCR with PaddleOCR
+            # PaddleOCR returns: [[bbox, (text, confidence)]]
+            ocr_results = self.reader.ocr(plate_img, cls=True)
             
-            if not ocr_results:
+            if not ocr_results or not ocr_results[0]:
                 # Try on preprocessed image if first attempt fails
-                ocr_results = self.reader.readtext(processed)
+                ocr_results = self.reader.ocr(processed, cls=True)
             
-            if ocr_results:
+            if ocr_results and ocr_results[0]:
                 # Combine all detected text (sometimes plate is split into multiple detections)
-                plate_text = ' '.join([result[1] for result in ocr_results])
+                plate_text = ' '.join([line[1][0] for line in ocr_results[0]])
                 
                 # Get average confidence
-                avg_confidence = np.mean([result[2] for result in ocr_results])
+                avg_confidence = np.mean([line[1][1] for line in ocr_results[0]])
                 
                 # Clean text
                 cleaned_text = self.clean_plate_text(plate_text)
