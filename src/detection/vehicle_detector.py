@@ -1,18 +1,9 @@
-"""
-Vehicle Detector using YOLOv8
-This script detects vehicles (car, bus, truck, motorcycle, etc.) in images
-"""
-
 from ultralytics import YOLO
 import cv2
 import os
 
 
-class VehicleDetector:
-    """
-    A class to detect vehicles in images using YOLOv8
-    """
-    
+class VehicleDetector: 
     # COCO dataset class IDs for vehicles
     VEHICLE_CLASSES = {
         2: 'car',
@@ -22,30 +13,12 @@ class VehicleDetector:
     }
     
     def __init__(self, model_name='yolov8n.pt'):
-        """
-        Initialize the vehicle detector
         
-        Args:
-            model_name: YOLO model to use
-                - yolov8n.pt (nano - fastest, less accurate)
-                - yolov8s.pt (small - balanced)
-                - yolov8m.pt (medium - slower, more accurate)
-        """
         print(f"Loading YOLOv8 model: {model_name}")
         self.model = YOLO(model_name)
         print("Model loaded successfully!")
     
     def detect_vehicles(self, image_path, confidence_threshold=0.5):
-        """
-        Detect vehicles in an image
-        
-        Args:
-            image_path: Path to the image file
-            confidence_threshold: Minimum confidence score (0-1)
-            
-        Returns:
-            List of detected vehicles with their details
-        """
         # Check if image exists
         if not os.path.exists(image_path):
             print(f"Error: Image not found at {image_path}")
@@ -86,16 +59,6 @@ class VehicleDetector:
         return detected_vehicles, img
     
     def draw_detections(self, img, vehicles):
-        """
-        Draw bounding boxes on the image
-        
-        Args:
-            img: Original image
-            vehicles: List of detected vehicles
-            
-        Returns:
-            Image with bounding boxes drawn
-        """
         img_copy = img.copy()
         
         for vehicle in vehicles:
@@ -118,13 +81,6 @@ class VehicleDetector:
         return img_copy
     
     def save_result(self, img, output_path):
-        """
-        Save the result image
-        
-        Args:
-            img: Image to save
-            output_path: Where to save the image
-        """
         cv2.imwrite(output_path, img)
         print(f"Result saved to: {output_path}")
 
@@ -153,7 +109,7 @@ if __name__ == "__main__":
         output_path = "data/images/result.jpg"
         detector.save_result(result_img, output_path)
         
-        # Optional: Display the result
+        # Display the result
         cv2.imshow('Vehicle Detection', result_img)
         cv2.waitKey(0)
         cv2.destroyAllWindows()
