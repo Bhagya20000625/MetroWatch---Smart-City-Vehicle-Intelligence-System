@@ -1,4 +1,4 @@
-from paddleocr import PaddleOCR
+import easyocr
 import cv2
 import numpy as np
 import os
@@ -11,12 +11,11 @@ class LicensePlateRecognizer:
         
         print("Initializing License Plate Recognizer...")
         
-        # Initialize PaddleOCR
-        # use_angle_cls=True helps with rotated plates
-        # lang='en' for English characters
-        print("Loading PaddleOCR (this takes a moment on first run)...")
-        self.reader = PaddleOCR(use_angle_cls=True, lang='en', show_log=False)
-        print("PaddleOCR loaded!")
+        # Initialize EasyOCR reader (English language)
+        # Set gpu=False for CPU mode (set to True if you have CUDA GPU)
+        print("Loading EasyOCR (this takes a moment on first run)...")
+        self.reader = easyocr.Reader(['en'], gpu=False)
+        print("EasyOCR loaded!")
         self.use_custom_detector = os.path.exists(plate_model_path)
         
         if self.use_custom_detector:
@@ -104,20 +103,20 @@ class LicensePlateRecognizer:
             # Step 2: Preprocess plate image
             processed = self.preprocess_plate(plate_img)
             
-            # Step 3: Run OCR with PaddleOCR
-            # PaddleOCR returns: [[bbox, (text, confidence)]]
-            ocr_results = self.reader.ocr(plate_img, cls=True)
+            # Step 3: Run OCR with EasyOCR
+            # EasyOCR returns: [(bbox, text, confidence)]
+            ocr_results = self.reader.readtext(plate_img)
             
-            if not ocr_results or not ocr_results[0]:
+            if not ocr_results:
                 # Try on preprocessed image if first attempt fails
-                ocr_results = self.reader.ocr(processed, cls=True)
+                ocr_results = self.reader.readtext(processed)
             
-            if ocr_results and ocr_results[0]:
+            if ocr_results:
                 # Combine all detected text (sometimes plate is split into multiple detections)
-                plate_text = ' '.join([line[1][0] for line in ocr_results[0]])
+                plate_text = ' '.join([result[1] for result in ocr_results])
                 
                 # Get average confidence
-                avg_confidence = np.mean([line[1][1] for line in ocr_results[0]])
+                avg_confidence = np.mean([result[2] for result in ocr_results])
                 
                 # Clean text
                 cleaned_text = self.clean_plate_text(plate_text)
@@ -172,7 +171,7 @@ if __name__ == "__main__":
     recognizer = LicensePlateRecognizer()
     
     # Test image path - use an image with a visible license plate
-    test_image = "data\images\car_withplate2.jpg"
+    test_image = "data/images/car_withplate3.jpg"
     
     print(f"\nProcessing: {test_image}")
     
