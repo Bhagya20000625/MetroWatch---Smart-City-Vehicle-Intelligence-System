@@ -25,7 +25,11 @@ data/videos/*
 # Results
 results/
 outputs/
+runs/
 
 # OS
 .DS_Store
 Thumbs.db
+
+# Downloaded datasets
+license-plate-recognition-4/
