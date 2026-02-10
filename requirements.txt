@@ -13,8 +13,9 @@ lap>=0.5.0
 scipy>=1.11.0
 
 # Phase 6: Backend 
-# fastapi>=0.104.0
-# uvicorn>=0.24.0
+fastapi>=0.104.0
+uvicorn>=0.24.0
+python-multipart>=0.0.6
 
 # Phase 7: Database 
 # psycopg2-binary>=2.9.0
