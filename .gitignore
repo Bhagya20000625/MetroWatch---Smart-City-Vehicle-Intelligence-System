@@ -33,3 +33,28 @@ Thumbs.db
 
 # Downloaded datasets
 license-plate-recognition-4/
+
+# Environment variables
+.env
+.env.local
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+postgres_data/
+pgdata/
+
+# Logs
+*.log
+logs/
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+
+# Local development
+*.local
+local_config.py
