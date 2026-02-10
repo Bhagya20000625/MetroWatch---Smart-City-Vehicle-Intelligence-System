@@ -535,8 +535,8 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 **Bhagya Jayawardhana**
 - GitHub: [@Bhagya20000625](https://github.com/Bhagya20000625)
-- Email: [your.email@example.com]
-- LinkedIn: [Your LinkedIn Profile]
+- Email: [warlordshad@gmail.com]
+- LinkedIn: [https://www.linkedin.com/in/bhagya-umayanga-9b189b305/?lipi=urn%3Ali%3Apage%3Ad_flagship3_profile_view_base_contact_details%3BpzvPTYQ4SSSkVyjls9QgAA%3D%3D]
 
 ---
 
@@ -544,7 +544,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 For issues, questions, or suggestions:
 - **GitHub Issues**: [Create an issue](https://github.com/Bhagya20000625/MetroWatch---Smart-City-Vehicle-Intelligence-System/issues)
-- **Email**: [your.email@example.com]
+- **Email**: [warlordshad@gmail.com]
 - **Documentation**: [Wiki](https://github.com/Bhagya20000625/MetroWatch---Smart-City-Vehicle-Intelligence-System/wiki)
 
 ---
