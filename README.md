@@ -558,7 +558,6 @@ For issues, questions, or suggestions:
 ---
 
 <div align="center">
-  <strong>Built with ❤️ for Smart Cities</strong>
   <br>
   <sub>Making urban transportation safer and more efficient</sub>
   <br><br>
