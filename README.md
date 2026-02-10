@@ -536,7 +536,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 **Bhagya Jayawardhana**
 - GitHub: [@Bhagya20000625](https://github.com/Bhagya20000625)
 - Email: [warlordshad@gmail.com]
-- LinkedIn: [https://www.linkedin.com/in/bhagya-umayanga-9b189b305/?lipi=urn%3Ali%3Apage%3Ad_flagship3_profile_view_base_contact_details%3BpzvPTYQ4SSSkVyjls9QgAA%3D%3D]
+- LinkedIn: [Bhagya Umayanga]
 
 ---
 
