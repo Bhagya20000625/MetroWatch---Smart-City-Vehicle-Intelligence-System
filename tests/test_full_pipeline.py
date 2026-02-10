@@ -149,7 +149,7 @@ class VehicleAnalyticsPipeline:
 # Main execution
 if __name__ == "__main__":
     # Test image path
-    TEST_IMAGE = r"C:\Users\Bhagya Umayanga\Downloads\Car4.jpg"
+    TEST_IMAGE = r"C:\Users\Bhagya Umayanga\Downloads\Car_2.jpeg"
     
     # Initialize pipeline
     pipeline = VehicleAnalyticsPipeline(vehicle_model='yolov8x.pt')

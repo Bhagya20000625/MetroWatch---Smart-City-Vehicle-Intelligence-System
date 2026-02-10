@@ -36,15 +36,16 @@ def train_model(dataset_path, epochs=50):
     # Train the model
     results = model.train(
         data=f"{dataset_path}/data.yaml", 
-        epochs=epochs,                      
+        epochs=50,                      
         imgsz=640,                          
-        batch=16,                           
+        batch=8,                            # Reduced for 6GB VRAM
         name='license_plate_detector',      
         patience=10,                        
         save=True,                         
         plots=True,                         
         verbose=True,
-        workers=0                           # Windows compatibility fix
+        workers=2,                          # Reduced workers (Windows compatible)
+        cache=False                         # Disable cache (saving VRAM)
     )
     
     print("\n✓ Training completed!")

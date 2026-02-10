@@ -84,7 +84,13 @@ class LicensePlateRecognizer:
         # Remove extra spaces
         text = ' '.join(text.split())
         
-        # Sri Lankan format: XX YYYY 9999 or XX YYY 9999 
+        # Fix Sri Lankan plate spacing: WKJ2845 -> WP KJ 2845
+        # Pattern: 2-letter province code + rest
+        # If we have 3+ letters at start with no space, split after 2nd letter
+        if re.match(r'^[A-Z]{3,}', text):
+            # Insert space after 2nd character
+            text = text[:2] + ' ' + text[2:]
+        
         return text
     
     def recognize_plate(self, img):
