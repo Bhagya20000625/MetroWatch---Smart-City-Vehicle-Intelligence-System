@@ -561,4 +561,6 @@ For issues, questions, or suggestions:
   <strong>Built with ❤️ for Smart Cities</strong>
   <br>
   <sub>Making urban transportation safer and more efficient</sub>
+  <br><br>
+  <sub>Building intelligent systems • Learning every day • Open to collaboration</sub>
 </div>
