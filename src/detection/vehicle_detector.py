@@ -19,14 +19,26 @@ class VehicleDetector:
         print("Model loaded successfully!")
     
     def detect_vehicles(self, image_path, confidence_threshold=0.5):
-        # Check if image exists
-        if not os.path.exists(image_path):
-            print(f"Error: Image not found at {image_path}")
-            return None
+        """
+        Detect vehicles in an image
         
-        # Load image
-        print(f"Processing image: {image_path}")
-        img = cv2.imread(image_path)
+        Parameters:
+            image_path: String path to image file OR numpy array (cv2 image)
+            confidence_threshold: Minimum confidence for detection
+        """
+        # Handle both file path and numpy array inputs
+        if isinstance(image_path, str):
+            # Check if image exists
+            if not os.path.exists(image_path):
+                print(f"Error: Image not found at {image_path}")
+                return None
+            
+            # Load image
+            print(f"Processing image: {image_path}")
+            img = cv2.imread(image_path)
+        else:
+            # Assume it's a numpy array (frame from video)
+            img = image_path
         
         # Run detection
         results = self.model(img, verbose=False)
