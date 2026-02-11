@@ -9,11 +9,13 @@ from datetime import datetime
 
 class VehicleDetection(BaseModel):
     """Single vehicle detection result"""
+    id: int
     type: str
     confidence: float
-    bbox: List[int]
+    bbox: dict  # Changed from List[int] to dict to match database format
     plate_text: Optional[str] = None
     province: Optional[str] = None
+    timestamp: str
 
 
 class DetectionResponse(BaseModel):

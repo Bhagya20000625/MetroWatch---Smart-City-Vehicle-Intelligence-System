@@ -65,7 +65,9 @@ class VehicleAnalyticsService:
                     
                     # Get province if plate detected
                     if plate_info and plate_info.get('plate_text'):
-                        province = self.province_detector.detect_province(plate_info['plate_text'])
+                        province_info = self.province_detector.detect_province(plate_info['plate_text'])
+                        # Extract province name string from dict
+                        province = province_info.get('province_name') if province_info else None
                 
                 # Create vehicle record in database
                 db_vehicle = Vehicle(

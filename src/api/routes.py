@@ -34,8 +34,12 @@ async def detect_vehicles(file: UploadFile = File(...)):
             'timestamp': datetime.now().isoformat()
         }
     except ValueError as e:
+        print(f"ValueError in detect_vehicles: {e}")
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
+        print(f"ERROR in detect_vehicles: {type(e).__name__}: {e}")
+        import traceback
+        traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
 
 
