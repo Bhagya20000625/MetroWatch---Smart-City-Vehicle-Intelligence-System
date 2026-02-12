@@ -15,6 +15,15 @@ export const api = {
     });
   },
   
+  // Upload video for detection
+  detectVehiclesVideo: (videoFile) => {
+    const formData = new FormData();
+    formData.append('file', videoFile);
+    return axios.post(`${API_BASE_URL}/detect/video`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    });
+  },
+  
   // Get analytics summary
   getAnalytics: () => axios.get(`${API_BASE_URL}/analytics/summary`),
   
@@ -25,3 +34,5 @@ export const api = {
   // Reset analytics
   resetAnalytics: () => axios.post(`${API_BASE_URL}/analytics/reset`)
 };
+
+export default api;

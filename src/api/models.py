@@ -31,7 +31,7 @@ class AnalyticsSummary(BaseModel):
     total_vehicles: int
     total_entries: int
     total_exits: int
-    current_count: int
+    total_traffic_flow: int
     by_type: dict
     by_province: dict
 

@@ -15,6 +15,9 @@ from sqlalchemy import func
 import cv2
 import numpy as np
 from datetime import datetime
+import tempfile
+import os
+from src.tracking.vehicle_tracker import VehicleTracker
 
 
 class VehicleAnalyticsService:
@@ -104,6 +107,218 @@ class VehicleAnalyticsService:
         finally:
             if close_session:
                 db_session.close()
+
+    def process_video(self, video_bytes, db_session=None):
+        """
+        Process video with bidirectional traffic monitoring.
+        
+        Uses line-crossing detection to count:
+        - Entry: Vehicles crossing entry line (entering monitored area)
+        - Exit: Vehicles crossing exit line (leaving monitored area)
+        
+        Entry and exit counts represent DIFFERENT vehicles in bidirectional traffic flow.
+        """
+        # Save video to temp file (OpenCV needs a file path)
+        with tempfile.NamedTemporaryFile(delete=False, suffix='.mp4') as tmp_file:
+            tmp_file.write(video_bytes)
+            video_path = tmp_file.name
+    
+        try:
+        # Open video
+            cap = cv2.VideoCapture(video_path)
+            if not cap.isOpened():
+                raise ValueError("Unable to open video file")
+        
+        # Get video properties
+            fps = int(cap.get(cv2.CAP_PROP_FPS))
+            width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+            height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+            total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+        
+            print(f"Processing video: {width}x{height}, {fps} FPS, {total_frames} frames")
+        
+        # Initialize tracker
+            tracker = VehicleTracker(max_age=30, min_hits=3, iou_threshold=0.3)
+        
+        # Set entry/exit zones (25% and 75% of frame height)
+            entry_y = int(height * 0.25)
+            exit_y = int(height * 0.75)
+            tracker.set_entry_line(0, entry_y, width, entry_y)
+            tracker.set_exit_line(0, exit_y, width, exit_y)
+        
+        # Use provided session or create new one
+            close_session = False
+            if db_session is None:
+                db_session = SessionLocal()
+                close_session = True
+        
+            frame_count = 0
+            tracked_vehicles = {}  # Store vehicle DB records by track_id
+            vehicle_types = {}     # Store vehicle types by track_id
+        
+            while True:
+                ret, frame = cap.read()
+                if not ret:
+                    break
+            
+                frame_count += 1
+            
+            # Process every 2nd frame for speed
+                if frame_count % 2 != 0:
+                    continue
+                
+            # Detect vehicles
+                detected_vehicles, _ = self.detector.detect_vehicles(frame, confidence_threshold=0.3)
+            
+            # Prepare detections for tracker (format: [[x1,y1,x2,y2,score], ...])
+                detections = []
+                detection_types = {}  # Map bbox to vehicle type
+
+                for v in detected_vehicles:
+                    x1, y1, x2, y2 = v['bbox']
+                    detections.append([x1, y1, x2, y2, v['confidence']])
+                    # Store type keyed by bbox for matching after tracking
+                    bbox_key = f"{int(x1)}_{int(y1)}_{int(x2)}_{int(y2)}"
+                    detection_types[bbox_key] = v['type']
+            
+            # Update tracker
+                if len(detections) > 0:
+                    tracks = tracker.update(np.array(detections), timestamp=datetime.utcnow())
+                else:
+                    tracks = tracker.update(np.empty((0, 5)), timestamp=datetime.utcnow())
+            
+            # Process each tracked vehicle
+                for track in tracks:
+                    x1, y1, x2, y2, track_id = track
+                    track_id = int(track_id)
+                
+                    # Find matching vehicle type (approximate match)
+                    bbox_key = f"{int(x1)}_{int(y1)}_{int(x2)}_{int(y2)}"
+                    vehicle_type = detection_types.get(bbox_key, 'car')
+                
+                    # Create vehicle record if new track
+                    if track_id not in tracked_vehicles:
+                        # Extract vehicle region for plate recognition (only on first detection)
+                        vehicle_img = frame[int(y1):int(y2), int(x1):int(x2)]
+                        plate_text = None
+                        province = None
+                    
+                        if vehicle_img.size > 0:
+                            plate_info = self.plate_recognizer.recognize_plate(vehicle_img)
+                            if plate_info and plate_info.get('plate_text'):
+                                plate_text = plate_info['plate_text']
+                                province_info = self.province_detector.detect_province(plate_text)
+                                province = province_info.get('province_name') if province_info else None
+                    
+                    # Create vehicle database record
+                        db_vehicle = Vehicle(
+                            track_id=track_id,
+                            vehicle_type=vehicle_type,
+                            confidence=float(detections[0][4]) if len(detections) > 0 else 0.9,
+                            bbox={'x1': int(x1), 'y1': int(y1), 'x2': int(x2), 'y2': int(y2)},
+                            plate_text=plate_text,
+                            province=province,
+                            timestamp=datetime.utcnow()
+                        )
+                        db_session.add(db_vehicle)
+                        db_session.flush()  # Get the ID without full commit
+                    
+                        tracked_vehicles[track_id] = db_vehicle
+                        vehicle_types[track_id] = vehicle_type
+                    
+                        print(f"New track {track_id}: {vehicle_type}, plate: {plate_text}")
+                
+                    # Log vehicle position
+                    center_x = (x1 + x2) / 2
+                    center_y = (y1 + y2) / 2
+                
+                    log = VehicleLog(
+                        vehicle_id=tracked_vehicles[track_id].id,
+                        track_id=track_id,
+                        position_x=float(center_x),
+                        position_y=float(center_y),
+                        frame_number=frame_count,
+                        event_type='tracked',
+                        timestamp=datetime.utcnow()
+                    )
+                    db_session.add(log)
+            
+                # Progress update
+                if frame_count % 30 == 0:
+                    stats = tracker.get_stats()
+                    progress = (frame_count / total_frames) * 100
+                    print(f"Progress: {progress:.1f}% | Tracks: {stats['current_vehicles']} | "
+                          f"Entries: {stats['total_entries']} | Exits: {stats['total_exits']}")
+        
+            # Process actual line-crossing events from tracker
+            print("\nProcessing line-crossing events...")
+            
+            # Save entry events (vehicles crossing INTO city)
+            for event in tracker.entry_events:
+                track_id = event['track_id']
+                if track_id in tracked_vehicles:
+                    bbox = event['bbox']
+                    center_x = (bbox[0] + bbox[2]) / 2
+                    center_y = (bbox[1] + bbox[3]) / 2
+                    
+                    entry_log = VehicleLog(
+                        vehicle_id=tracked_vehicles[track_id].id,
+                        track_id=track_id,
+                        position_x=float(center_x),
+                        position_y=float(center_y),
+                        frame_number=event['frame'],
+                        event_type='entry',
+                        timestamp=event['timestamp'] or datetime.utcnow()
+                    )
+                    db_session.add(entry_log)
+            
+            # Save exit events (vehicles crossing OUT OF city)
+            for event in tracker.exit_events:
+                track_id = event['track_id']
+                if track_id in tracked_vehicles:
+                    bbox = event['bbox']
+                    center_x = (bbox[0] + bbox[2]) / 2
+                    center_y = (bbox[1] + bbox[3]) / 2
+                    
+                    exit_log = VehicleLog(
+                        vehicle_id=tracked_vehicles[track_id].id,
+                        track_id=track_id,
+                        position_x=float(center_x),
+                        position_y=float(center_y),
+                        frame_number=event['frame'],
+                        event_type='exit',
+                        timestamp=event['timestamp'] or datetime.utcnow()
+                    )
+                    db_session.add(exit_log)
+            
+            db_session.commit()
+            
+            print(f"✓ Saved {len(tracker.entry_events)} entry events")
+            print(f"✓ Saved {len(tracker.exit_events)} exit events")
+        
+            cap.release()
+        
+            # Get final stats from tracker
+            final_stats = tracker.get_stats()
+        
+            print(f"✓ Video processed: {frame_count} frames, {len(tracked_vehicles)} vehicles tracked")
+        
+            return {
+                'total_frames': total_frames,
+                'processed_frames': frame_count,
+                'total_vehicles': len(tracked_vehicles),
+                'total_entries': final_stats['total_entries'],
+                'total_exits': final_stats['total_exits'],
+                'fps': fps
+        }
+    
+        finally:
+            # Clean up temp file
+            if os.path.exists(video_path):
+                os.remove(video_path)
+        
+            if close_session:
+                db_session.close()
     
     def get_analytics(self, db_session=None):
         """
@@ -150,7 +365,7 @@ class VehicleAnalyticsService:
                 'total_vehicles': total,
                 'total_entries': entry_count,
                 'total_exits': exit_count,
-                'current_count': entry_count - exit_count,
+                'total_traffic_flow': entry_count + exit_count,
                 'by_type': by_type,
                 'by_province': by_province
             }

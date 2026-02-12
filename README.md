@@ -15,14 +15,18 @@ An intelligent vehicle monitoring and analytics platform designed for smart city
 - **🔍 License Plate Recognition**: Custom-trained OCR system for Sri Lankan vehicle plates
 - **🗺️ Province Detection**: Automatic identification of vehicle origin by province codes
 - **📹 Real-Time Tracking**: SORT algorithm with Kalman filtering for persistent vehicle tracking
-- **📊 Entry/Exit Analytics**: Zone-based counting for traffic flow analysis
+- **🎬 Video Processing**: Upload and analyze video files with line-crossing detection for entry/exit events
+- **📊 Bidirectional Traffic Monitoring**: Entry and exit line-crossing detection for accurate traffic flow analysis
 - **💾 Data Persistence**: PostgreSQL database for historical analytics and reporting
 - **🌐 REST API**: FastAPI-powered backend with comprehensive endpoints
-- **📈 Interactive Dashboard**: Real-time visualization of traffic patterns and statistics
+- **📈 Interactive Dashboard**: Real-time React dashboard with charts, statistics, and vehicle history
 
 ### Technical Highlights
 - **GPU Acceleration**: CUDA support for high-performance inference
 - **Custom Models**: Fine-tuned license plate detector trained on 7,057+ images
+- **Line-Crossing Detection**: Precise entry/exit event tracking using spatial zone analysis
+- **Cumulative Analytics**: Time-series data for traffic pattern analysis and trend identification
+- **Modern UI**: React 18 dashboard with responsive design and real-time updates
 - **Scalable Architecture**: Microservices-ready design with Docker support
 - **Database Migrations**: Alembic-managed schema versioning
 - **Production Ready**: Environment-based configuration and error handling
@@ -75,6 +79,13 @@ An intelligent vehicle monitoring and analytics platform designed for smart city
 - **Pydantic**: Data validation and serialization
 - **Python-Multipart**: File upload handling
 
+### Frontend & Dashboard
+- **React 18**: Modern UI library with hooks
+- **Vite**: Fast development server and build tool
+- **Tailwind CSS 3.4**: Utility-first CSS framework
+- **Recharts**: Composable charting library
+- **Axios**: HTTP client for API communication
+
 ### Database & ORM
 - **PostgreSQL 16**: Relational database
 - **SQLAlchemy 2.0**: ORM and query builder
@@ -102,6 +113,8 @@ An intelligent vehicle monitoring and analytics platform designed for smart city
 - **CUDA Toolkit**: 11.8+ (for GPU acceleration)
 - **16GB RAM**: For processing high-resolution videos
 - **SSD Storage**: For faster model loading
+- **Node.js**: 18.x or higher (for React dashboard)
+- **npm/yarn**: Package manager for frontend dependencies
 
 ### Operating System
 - Windows 10/11
@@ -185,6 +198,20 @@ Models are tracked with Git LFS or can be downloaded separately:
 - **YOLOv8 Vehicle Detection**: `yolov8n.pt`, `yolov8x.pt` (auto-downloaded on first run)
 - **Custom Plate Detector**: `models/license_plate_detector.pt` (train or use provided)
 
+### 8. Set Up React Dashboard (Optional)
+```bash
+# Navigate to dashboard directory
+cd dashboard
+
+# Install dependencies
+npm install
+
+# Start development server
+npm run dev
+```
+
+The dashboard will be available at http://localhost:5173
+
 ---
 
 ## ⚙️ Configuration
@@ -229,7 +256,7 @@ GET /api/v1/health
 ```
 Returns API status and version information.
 
-#### 2. Vehicle Detection
+#### 2. Image Detection
 ```bash
 POST /api/v1/detect
 Content-Type: multipart/form-data
@@ -257,7 +284,39 @@ Detects vehicles, license plates, and provinces in uploaded image.
 }
 ```
 
-#### 3. Analytics Summary
+#### 3. Video Detection
+```bash
+POST /api/v1/detect/video
+Content-Type: multipart/form-data
+
+Parameters:
+  - file: Video file (MP4, AVI, MOV)
+```
+Processes video with SORT tracking and line-crossing detection for entry/exit events.
+
+**Response:**
+```json
+{
+  "total_vehicles": 301,
+  "entries": 104,
+  "exits": 112,
+  "traffic_flow": 216,
+  "by_type": {
+    "car": 245,
+    "motorcycle": 32,
+    "bus": 14,
+    "truck": 10
+  },
+  "by_province": {
+    "Western Province": 156,
+    "Central Province": 78,
+    "Southern Province": 45
+  },
+  "timestamp": "2026-02-12T10:30:00"
+}
+```
+
+#### 4. Analytics Summary
 ```bash
 GET /api/v1/analytics/summary
 ```
@@ -269,7 +328,7 @@ Returns comprehensive traffic analytics.
   "total_vehicles": 1523,
   "total_entries": 856,
   "total_exits": 667,
-  "current_count": 189,
+  "total_traffic_flow": 1523,
   "by_type": {
     "car": 1120,
     "motorcycle": 245,
@@ -284,13 +343,15 @@ Returns comprehensive traffic analytics.
 }
 ```
 
-#### 4. Recent Vehicle History
+**Note:** `total_traffic_flow` represents the sum of entries and exits (bidirectional traffic monitoring). All analytics are cumulative over time for traffic pattern analysis.
+
+#### 5. Recent Vehicle History
 ```bash
 GET /api/v1/analytics/vehicles?limit=10
 ```
 Returns most recent vehicle detections.
 
-#### 5. Reset Analytics
+#### 6. Reset Analytics
 ```bash
 POST /api/v1/analytics/reset
 ```
@@ -308,9 +369,34 @@ curl -X POST "http://localhost:8000/api/v1/detect" \
   -F "file=@test_image.jpg"
 ```
 
-### Video Processing
-Use the video tracking script for batch processing:
+### React Dashboard
+Start the interactive web dashboard:
 ```bash
+# In dashboard directory
+cd dashboard
+npm run dev
+```
+
+Access the dashboard at http://localhost:5173
+
+**Features:**
+- 📊 Real-time statistics (Total Vehicles, Entries, Exits, Traffic Flow)
+- 📈 Vehicle type distribution chart (Pie chart)
+- 🗺️ Province-wise traffic chart (Bar chart)
+- 📋 Recent vehicle detections table
+- 🖼️ Image/Video upload with instant analysis
+- 🔄 Automatic data refresh
+
+### Video Processing
+Upload videos through the dashboard or use the API directly:
+```bash
+# Via API
+curl -X POST "http://localhost:8000/api/v1/detect/video" \
+  -H "accept: application/json" \
+  -H "Content-Type: multipart/form-data" \
+  -F "file=@test_video.mp4"
+
+# Or use test script for batch processing
 python tests/test_video_tracking.py
 ```
 
@@ -368,6 +454,22 @@ Metro_Watch/
 │   ├── versions/                  # Migration scripts
 │   ├── env.py                     # Alembic environment
 │   └── script.py.mako            # Migration template
+├── 📂 dashboard/                  # React Dashboard
+│   ├── public/                    # Static assets
+│   ├── src/                       # React source code
+│   │   ├── components/           # UI components
+│   │   │   ├── ImageUpload.jsx   # File upload component
+│   │   │   ├── StatsCard.jsx     # Statistics card
+│   │   │   ├── VehicleTypeChart.jsx  # Pie chart
+│   │   │   ├── ProvinceChart.jsx # Bar chart
+│   │   │   └── RecentVehiclesTable.jsx
+│   │   ├── services/             # API client
+│   │   │   └── api.js            # Axios API wrapper
+│   │   ├── App.jsx               # Main app component
+│   │   └── main.jsx              # Entry point
+│   ├── package.json              # Node dependencies
+│   ├── vite.config.js            # Vite configuration
+│   └── tailwind.config.js        # Tailwind CSS config
 ├── 📂 data/                       # Data storage
 │   ├── images/                    # Test images
 │   └── videos/                    # Test videos
@@ -454,11 +556,17 @@ Metro_Watch/
 ## 🚀 Future Enhancements
 
 ### Short Term
+- [x] React dashboard with real-time updates
+- [x] Video processing with SORT tracking
+- [x] Line-crossing detection for entry/exit events
+- [x] Cumulative analytics for traffic pattern analysis
 - [ ] Implement Redis caching for analytics
 - [ ] Add background job processing with Celery
 - [ ] Create Docker containerization
 - [ ] Implement unit tests with pytest
 - [ ] Add logging with ELK stack
+- [ ] Add date range filtering to analytics
+- [ ] Export reports (CSV/PDF)
 
 ### Long Term
 - [ ] Multi-camera support with camera management

@@ -41,6 +41,35 @@ async def detect_vehicles(file: UploadFile = File(...)):
         import traceback
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
+@router.post("/detect/video")
+async def detect_vehicles_video(file: UploadFile = File(...)):
+    try:
+        # Validate file type
+        if not file.content_type.startswith('video/'):
+            raise HTTPException(status_code=400, detail="File must be a video (MP4, AVI, MOV)")
+        
+        # Read video
+        contents = await file.read()
+        
+        print(f"Processing video: {file.filename} ({len(contents)} bytes)")
+        
+        # Process with analytics service
+        result = analytics_service.process_video(contents)
+        
+        return {
+            'success': True,
+            'message': 'Video processed successfully',
+            **result,
+            'timestamp': datetime.now().isoformat()
+        }
+    except ValueError as e:
+        print(f"ValueError in detect_vehicles_video: {e}")
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        print(f"ERROR in detect_vehicles_video: {type(e).__name__}: {e}")
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
 
 
 @router.get("/analytics/summary", response_model=AnalyticsSummary)
